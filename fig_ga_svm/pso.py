@@ -9,6 +9,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report, confusion_matrix, f1_score, accuracy_score
+from joblib import Parallel, delayed
 
 # -----------------------------------------------------------------------------
 # 1. POOL DE GENES Y PARÁMETROS DE PSO
@@ -67,7 +68,9 @@ def svm(X, y) -> float:
         'svc__gamma': ['scale', 0.01, 0.1, 1],
         'svc__kernel': ['rbf', 'linear']
     }
-    grid = GridSearchCV(pipeline, param_grid, cv=3, scoring='f1', n_jobs=-1)
+    # IMPORTANT: when we parallelize over particles, keep GridSearchCV single-threaded
+    # to avoid nested parallelism. Set n_jobs=1 here.
+    grid = GridSearchCV(pipeline, param_grid, cv=3, scoring='f1', n_jobs=1)
     grid.fit(X, y)
     return grid.best_score_
 
@@ -124,7 +127,8 @@ def validate_on_test_set(best_bands: tuple, X_train: pd.DataFrame, y_train: pd.D
         'svc__kernel': ['rbf', 'linear']
     }
     # Usamos más splits (cv=5) para una validación final más robusta
-    grid = GridSearchCV(pipeline, param_grid, cv=5, scoring='f1', n_jobs=-1)
+    # Use n_jobs=1 here too to avoid nested parallelism when evaluating particles
+    grid = GridSearchCV(pipeline, param_grid, cv=5, scoring='f1', n_jobs=1)
     grid.fit(X_train_best, y_train)
 
     best_model = grid.best_estimator_
@@ -190,8 +194,14 @@ def main():
     # Mejores personales (pbest) inicializados con las posiciones actuales
     particles_pbest = np.copy(particles_pos)
 
-    # Evaluar el fitness de las posiciones iniciales
-    pbest_fitness = np.array([fitness_function(map_position_to_bands(pos), X1_train, X2_train, y_train) for pos in particles_pbest])
+    # Evaluar el fitness de las posiciones iniciales (paralelizado)
+    # Use joblib.Parallel to compute fitness for each particle in parallel.
+    pbest_fitness = np.array(
+        Parallel(n_jobs=-1)(
+            delayed(lambda pos: fitness_function(map_position_to_bands(pos), X1_train, X2_train, y_train))(pos)
+            for pos in particles_pbest
+        )
+    )
 
     # Encontrar el mejor global (gbest)
     gbest_idx = np.argmax(pbest_fitness)
@@ -205,39 +215,44 @@ def main():
     print("\n--- 🧠 Iniciando Optimización ---")
     history = []
 
+
     for i in range(N_ITERATIONS):
         # Inercia decreciente: balancea exploración y explotación
         w = W_MAX - (W_MAX - W_MIN) * i / N_ITERATIONS
 
-        for j in range(N_PARTICLES):
-            r1, r2 = np.random.rand(2)
+        # Vectorized random coefficients per particle
+        r1 = np.random.rand(N_PARTICLES, NUM_BANDS)
+        r2 = np.random.rand(N_PARTICLES, NUM_BANDS)
 
-            # --- Ecuaciones clásicas de PSO ---
-            # 1. Actualizar velocidad
-            cognitive_vel = C1 * r1 * (particles_pbest[j] - particles_pos[j])
-            social_vel = C2 * r2 * (gbest - particles_pos[j])
-            particles_vel[j] = w * particles_vel[j] + cognitive_vel + social_vel
+        # Cognitive and social components (gbest broadcasts across particles)
+        cognitive = C1 * r1 * (particles_pbest - particles_pos)
+        social = C2 * r2 * (gbest - particles_pos)
 
-            # 2. Actualizar posición
-            particles_pos[j] = particles_pos[j] + particles_vel[j]
+        # 1. Actualizar velocidades y posiciones de forma vectorizada
+        particles_vel = w * particles_vel + cognitive + social
+        particles_pos = particles_pos + particles_vel
+        particles_pos = np.clip(particles_pos, 0.0, 1.0)
 
-            # 3. Mantener las posiciones dentro de los límites [0, 1]
-            particles_pos[j] = np.clip(particles_pos[j], 0.0, 1.0)
+        # Evaluar fitness de todas las partículas en paralelo (gbest permanece fijo dentro de la iteración)
+        fitness_results = Parallel(n_jobs=-1)(
+            delayed(lambda pos: fitness_function(map_position_to_bands(pos), X1_train, X2_train, y_train))(pos)
+            for pos in particles_pos
+        )
 
-            # --- Evaluación y actualización ---
-            current_bands = map_position_to_bands(particles_pos[j])
-            current_fitness = fitness_function(current_bands, X1_train, X2_train, y_train)
+        current_fitness_array = np.array(fitness_results)
 
-            # Actualizar pbest
-            if current_fitness > pbest_fitness[j]:
-                pbest_fitness[j] = current_fitness
-                particles_pbest[j] = particles_pos[j]
+        # Actualizar pbest donde corresponda
+        improved_mask = current_fitness_array > pbest_fitness
+        if np.any(improved_mask):
+            particles_pbest[improved_mask] = particles_pos[improved_mask]
+            pbest_fitness[improved_mask] = current_fitness_array[improved_mask]
 
-                # Actualizar gbest
-                if current_fitness > gbest_fitness:
-                    gbest_fitness = current_fitness
-                    gbest = particles_pos[j]
-                    gbest_bands = current_bands
+        # Actualizar gbest usando los pbests actualizados
+        new_gbest_idx = int(np.argmax(pbest_fitness))
+        if pbest_fitness[new_gbest_idx] > gbest_fitness:
+            gbest_fitness = pbest_fitness[new_gbest_idx]
+            gbest = particles_pbest[new_gbest_idx]
+            gbest_bands = map_position_to_bands(gbest)
 
         history.append(gbest_fitness)
         print(f"Iteración {i+1:03d}/{N_ITERATIONS} | Mejor Fitness Global: {gbest_fitness:.4f}")
