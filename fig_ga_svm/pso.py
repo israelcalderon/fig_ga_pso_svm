@@ -1,12 +1,14 @@
 import pandas as pd
 import numpy as np
-import random
 import pprint
+import seaborn as sns
+from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import classification_report, confusion_matrix, f1_score, accuracy_score
 
 # -----------------------------------------------------------------------------
 # 1. POOL DE GENES Y PARÁMETROS DE PSO
@@ -36,8 +38,8 @@ GENE_POOL = [
 
 
 # --- Parámetros de PSO ---
-N_PARTICLES = 250       # Número de partículas en el enjambre
-N_ITERATIONS = 200     # Número de iteraciones
+N_PARTICLES = 350       # Número de partículas en el enjambre
+N_ITERATIONS = 250     # Número de iteraciones
 NUM_BANDS = 5          # Dimensiones del problema (bandas a seleccionar) 3
 
 # --- Coeficientes de PSO ---
@@ -70,12 +72,14 @@ def svm(X, y) -> float:
     return grid.best_score_
 
 
-def fitness_function(bands: tuple, X: pd.DataFrame, y: pd.DataFrame) -> float:
+def fitness_function(bands: tuple, X_means: pd.DataFrame, X_std: pd.DataFrame, y: pd.DataFrame) -> float:
     """Función objetivo que evalúa una combinación de bandas."""
     if not bands:
         return 0.0
     columns = list(bands)
-    x_subset = X[columns]
+    x_mean_subset = X_means[columns].add_suffix('_mean')
+    x_std_subset = X_std[columns].add_suffix('_std')
+    x_subset = pd.concat([x_mean_subset, x_std_subset], axis=1)
     return svm(x_subset, y)
 
 def map_position_to_bands(position: np.ndarray) -> tuple:
@@ -97,19 +101,84 @@ def map_position_to_bands(position: np.ndarray) -> tuple:
 
     return tuple(sorted([GENE_POOL[i] for i in indices]))
 
+
+def validate_on_test_set(best_bands: tuple, X_train: pd.DataFrame, y_train: pd.DataFrame, X_test: pd.DataFrame, y_test: pd.DataFrame):
+    """
+    Entrena el modelo final con las mejores bandas y todos los datos de entrenamiento,
+    y lo evalúa en el conjunto de prueba.
+    """
+    print("\n" + "="*60)
+    print("--- 🧪 Iniciando Validación Final con el Conjunto de Prueba ---")
+    print("="*60)
+
+    # 1. Filtrar los datos para usar solo las mejores bandas
+    X_train_best = X_train[list(best_bands)]
+    X_test_best = X_test[list(best_bands)]
+
+    # 2. Usar GridSearchCV para encontrar el mejor modelo con los datos de entrenamiento
+    print("\nAjustando el modelo final con los mejores hiperparámetros...")
+    pipeline = make_pipeline(StandardScaler(), SVC(random_state=42, class_weight='balanced'))
+    param_grid = {
+        'svc__C': [0.1, 1, 10, 100],
+        'svc__gamma': ['scale', 0.01, 0.1, 1],
+        'svc__kernel': ['rbf', 'linear']
+    }
+    # Usamos más splits (cv=5) para una validación final más robusta
+    grid = GridSearchCV(pipeline, param_grid, cv=5, scoring='f1', n_jobs=-1)
+    grid.fit(X_train_best, y_train)
+
+    best_model = grid.best_estimator_
+    print(f"\nMejores parámetros encontrados: {grid.best_params_}")
+
+    # 3. Realizar predicciones en el conjunto de prueba
+    y_pred = best_model.predict(X_test_best)
+
+    # 4. Generar y mostrar métricas de evaluación
+    print("\n" + "-"*60)
+    print("--- 📊 Resultados de la Validación ---")
+    print("-"*60)
+
+    # Reporte de Clasificación
+    print("\nReporte de Clasificación:")
+    print(classification_report(y_test, y_pred))
+
+    # Métricas adicionales
+    f1 = f1_score(y_test, y_pred, average='weighted')
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"F1-Score (Ponderado) en Test: {f1:.4f}")
+    print(f"Accuracy en Test: {accuracy:.4f}")
+
+    # 5. Generar y guardar la Matriz de Confusión
+    cm = confusion_matrix(y_test, y_pred)
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=np.unique(y_train), yticklabels=np.unique(y_train))
+    plt.title('Matriz de Confusión en el Conjunto de Prueba')
+    plt.xlabel('Predicción')
+    plt.ylabel('Valor Real')
+    plt.savefig('confusion_matrix.png')
+    print("\nMatriz de confusión guardada como 'confusion_matrix.png'")
+    plt.show()
+
 # -----------------------------------------------------------------------------
 # 3. FUNCIÓN PRINCIPAL CON LÓGICA DE PSO
 # -----------------------------------------------------------------------------
 
 def main():
     """Carga los datos y ejecuta el algoritmo PSO optimizado."""
-    # --- Carga de datos ---
-    # !!! IMPORTANTE: Cambia esta ruta a la ubicación de tu archivo CSV !!!
-    file_path = '/Users/israel/Projects/figs_means_db/db/figs_means.csv'
-    df = pd.read_csv(file_path)
-    X_train, _, y_train, _ = train_test_split(df.drop('class', axis=1), df['class'], test_size=0.2, random_state=42, stratify=df['class'])
+    file_means = '/usr/src/app/db/means.csv'
+    file_std = '/usr/src/app/db/std.csv'
+    #file_means = '/Users/israel/Projects/fig_ga_svm/db/means.csv'
+    #file_std = '/Users/israel/Projects/fig_ga_svm/db/std.csv'
+    df_means = pd.read_csv(file_means)
+    df_std = pd.read_csv(file_std)
+    X1_train, X1_test, X2_train, X2_test, y_train, y_test = train_test_split(
+        df_means.drop('class', axis=1),
+        df_std.drop('class', axis=1),
+        df_means['class'],
+        test_size=0.2,
+        random_state=42,
+        stratify=df_means['class'])
 
-    # --- Inicialización del Enjambre ---
     print("--- 🚀 Inicializando Enjambre de Partículas ---")
 
     # Posiciones: Vectores aleatorios de tamaño NUM_BANDS con valores en [0, 1]
@@ -122,7 +191,7 @@ def main():
     particles_pbest = np.copy(particles_pos)
 
     # Evaluar el fitness de las posiciones iniciales
-    pbest_fitness = np.array([fitness_function(map_position_to_bands(pos), X_train, y_train) for pos in particles_pbest])
+    pbest_fitness = np.array([fitness_function(map_position_to_bands(pos), X1_train, X2_train, y_train) for pos in particles_pbest])
 
     # Encontrar el mejor global (gbest)
     gbest_idx = np.argmax(pbest_fitness)
@@ -157,7 +226,7 @@ def main():
 
             # --- Evaluación y actualización ---
             current_bands = map_position_to_bands(particles_pos[j])
-            current_fitness = fitness_function(current_bands, X_train, y_train)
+            current_fitness = fitness_function(current_bands, X1_train, X2_train, y_train)
 
             # Actualizar pbest
             if current_fitness > pbest_fitness[j]:
@@ -172,14 +241,23 @@ def main():
 
         history.append(gbest_fitness)
         print(f"Iteración {i+1:03d}/{N_ITERATIONS} | Mejor Fitness Global: {gbest_fitness:.4f}")
+        with open('/usr/src/app/logs/logs.txt', 'a') as file:
+            file.write(f"Iteración {i+1:03d}/{N_ITERATIONS} | Mejor Fitness Global: {gbest_fitness:.4f}\n")
 
     # --- Resultados Finales ---
     print("\n--- ✅ Algoritmo Finalizado ---")
     print(f"🏆 Mejor combinación de bandas encontrada: {gbest_bands}")
     print(f"⭐ Valor de fitness (F1 Score): {gbest_fitness:.4f}")
+    with open('/usr/src/app/logs/logs.txt', 'a') as file:
+        file.write("\n--- ✅ Algoritmo Finalizado ---")
+        file.write(f"🏆 Mejor combinación de bandas encontrada: {gbest_bands}")
+        file.write(f"⭐ Valor de fitness (F1 Score): {gbest_fitness:.4f}")
+        file.write("\n📈 Historial del mejor fitness por iteración:")
+        file.write(str(history))
 
     print("\n📈 Historial del mejor fitness por iteración:")
     pprint.pprint(history)
+    # validate_on_test_set(gbest_bands, X1_train, y_train, X1_test, y_test)
 
 
 if __name__ == '__main__':
