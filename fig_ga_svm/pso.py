@@ -44,10 +44,10 @@ N_ITERATIONS = 250     # Número de iteraciones
 NUM_BANDS = 3          # Dimensiones del problema (bandas a seleccionar) 3
 
 # --- Coeficientes de PSO ---
-W_MAX = 0.9  # Inercia inicial (favorece exploración global)
+W_MAX = 0.95  # Inercia inicial (favorece exploración global)
 W_MIN = 0.5  # Inercia final (favorece exploración local)
-C1 = 2.5     # Coeficiente cognitivo (influencia de pbest)
-C2 = 1.5     # Coeficiente social (influencia de gbest)
+C1 = 2.7     # Coeficiente cognitivo (influencia de pbest)
+C2 = 1.0     # Coeficiente social (influencia de gbest)
 
 # -----------------------------------------------------------------------------
 # 2. FUNCIÓN DE FITNESS Y MAPEADO
@@ -169,10 +169,10 @@ def validate_on_test_set(best_bands: tuple, X_train: pd.DataFrame, y_train: pd.D
 
 def main():
     """Carga los datos y ejecuta el algoritmo PSO optimizado."""
-    #file_means = '/usr/src/app/db/means.csv'
-    #file_std = '/usr/src/app/db/std.csv'
-    file_means = '/Users/israel/Projects/fig_ga_svm/db/means.csv'
-    file_std = '/Users/israel/Projects/fig_ga_svm/db/std.csv'
+    file_means = '/usr/src/app/db/means.csv'
+    file_std = '/usr/src/app/db/std.csv'
+    # file_means = '/Users/israel/Projects/fig_ga_svm/db/means.csv'
+    # file_std = '/Users/israel/Projects/fig_ga_svm/db/std.csv'
     df_means = pd.read_csv(file_means)
     df_std = pd.read_csv(file_std)
     X1_train, X1_test, X2_train, X2_test, y_train, y_test = train_test_split(
