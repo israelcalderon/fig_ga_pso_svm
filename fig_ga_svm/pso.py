@@ -38,13 +38,13 @@ GENE_POOL = [
 
 
 # --- Parámetros de PSO ---
-N_PARTICLES = 350       # Número de partículas en el enjambre
+N_PARTICLES = 400       # Número de partículas en el enjambre
 N_ITERATIONS = 250     # Número de iteraciones
-NUM_BANDS = 5          # Dimensiones del problema (bandas a seleccionar) 3
+NUM_BANDS = 3          # Dimensiones del problema (bandas a seleccionar) 3
 
 # --- Coeficientes de PSO ---
 W_MAX = 0.9  # Inercia inicial (favorece exploración global)
-W_MIN = 0.4  # Inercia final (favorece exploración local)
+W_MIN = 0.5  # Inercia final (favorece exploración local)
 C1 = 2.5     # Coeficiente cognitivo (influencia de pbest)
 C2 = 1.5     # Coeficiente social (influencia de gbest)
 
@@ -165,10 +165,10 @@ def validate_on_test_set(best_bands: tuple, X_train: pd.DataFrame, y_train: pd.D
 
 def main():
     """Carga los datos y ejecuta el algoritmo PSO optimizado."""
-    file_means = '/usr/src/app/db/means.csv'
-    file_std = '/usr/src/app/db/std.csv'
-    #file_means = '/Users/israel/Projects/fig_ga_svm/db/means.csv'
-    #file_std = '/Users/israel/Projects/fig_ga_svm/db/std.csv'
+    #file_means = '/usr/src/app/db/means.csv'
+    #file_std = '/usr/src/app/db/std.csv'
+    file_means = '/Users/israel/Projects/fig_ga_svm/db/means.csv'
+    file_std = '/Users/israel/Projects/fig_ga_svm/db/std.csv'
     df_means = pd.read_csv(file_means)
     df_std = pd.read_csv(file_std)
     X1_train, X1_test, X2_train, X2_test, y_train, y_test = train_test_split(
@@ -241,19 +241,11 @@ def main():
 
         history.append(gbest_fitness)
         print(f"Iteración {i+1:03d}/{N_ITERATIONS} | Mejor Fitness Global: {gbest_fitness:.4f}")
-        with open('/usr/src/app/logs/logs.txt', 'a') as file:
-            file.write(f"Iteración {i+1:03d}/{N_ITERATIONS} | Mejor Fitness Global: {gbest_fitness:.4f}\n")
 
     # --- Resultados Finales ---
     print("\n--- ✅ Algoritmo Finalizado ---")
     print(f"🏆 Mejor combinación de bandas encontrada: {gbest_bands}")
     print(f"⭐ Valor de fitness (F1 Score): {gbest_fitness:.4f}")
-    with open('/usr/src/app/logs/logs.txt', 'a') as file:
-        file.write("\n--- ✅ Algoritmo Finalizado ---")
-        file.write(f"🏆 Mejor combinación de bandas encontrada: {gbest_bands}")
-        file.write(f"⭐ Valor de fitness (F1 Score): {gbest_fitness:.4f}")
-        file.write("\n📈 Historial del mejor fitness por iteración:")
-        file.write(str(history))
 
     print("\n📈 Historial del mejor fitness por iteración:")
     pprint.pprint(history)
