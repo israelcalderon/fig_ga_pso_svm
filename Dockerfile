@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 WORKDIR /usr/src/app/fig_ga_svm/
 
-CMD [ "python", "./pso.py" ]
+CMD [ "python", "-u", "./pso.py" ]
