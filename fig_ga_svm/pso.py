@@ -39,15 +39,15 @@ GENE_POOL = [
 
 
 # --- Parámetros de PSO ---
-N_PARTICLES = 400       # Número de partículas en el enjambre
+N_PARTICLES = 300       # Número de partículas en el enjambre
 N_ITERATIONS = 250     # Número de iteraciones
 NUM_BANDS = 3          # Dimensiones del problema (bandas a seleccionar) 3
 
 # --- Coeficientes de PSO ---
-W_MAX = 0.95  # Inercia inicial (favorece exploración global)
-W_MIN = 0.5  # Inercia final (favorece exploración local)
-C1 = 2.8     # Coeficiente cognitivo (influencia de pbest)
-C2 = 0.9     # Coeficiente social (influencia de gbest)
+W_MAX = 0.9  # Inercia inicial (favorece exploración global)
+W_MIN = 0.4  # Inercia final (favorece exploración local)
+C1 = 2.0     # Coeficiente cognitivo (influencia de pbest)
+C2 = 2.0     # Coeficiente social (influencia de gbest)
 
 # -----------------------------------------------------------------------------
 # 2. FUNCIÓN DE FITNESS Y MAPEADO
