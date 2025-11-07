@@ -10,7 +10,6 @@ from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report, confusion_matrix, f1_score, accuracy_score
 from joblib import Parallel, delayed
-
 # -----------------------------------------------------------------------------
 # 1. POOL DE GENES Y PARÁMETROS DE PSO
 # -----------------------------------------------------------------------------
@@ -42,6 +41,7 @@ GENE_POOL = [
 N_PARTICLES = 300       # Número de partículas en el enjambre
 N_ITERATIONS = 250     # Número de iteraciones
 NUM_BANDS = 3          # Dimensiones del problema (bandas a seleccionar) 3
+MUTATION_RATE = 0.1
 
 # --- Coeficientes de PSO ---
 W_MAX = 0.9  # Inercia inicial (favorece exploración global)
@@ -232,6 +232,13 @@ def main():
         particles_vel = w * particles_vel + cognitive + social
         particles_pos = particles_pos + particles_vel
         particles_pos = np.clip(particles_pos, 0.0, 1.0)
+
+        # mutation logic
+        mutation_mask = np.random.rand(N_PARTICLES, 1) < MUTATION_RATE
+        new_random_positions = np.random.rand(N_PARTICLES, NUM_BANDS)
+        particles_pos = np.where(mutation_mask,
+                                 new_random_positions,
+                                 particles_pos)
 
         # Evaluar fitness de todas las partículas en paralelo (gbest permanece fijo dentro de la iteración)
         fitness_results = Parallel(n_jobs=-1)(
