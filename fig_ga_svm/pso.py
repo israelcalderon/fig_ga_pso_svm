@@ -10,9 +10,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report, confusion_matrix, f1_score, accuracy_score
 from joblib import Parallel, delayed
-# -----------------------------------------------------------------------------
-# 1. POOL DE GENES Y PARÁMETROS DE PSO
-# -----------------------------------------------------------------------------
+
 
 GENE_POOL = [
     "397.01", "398.32", "399.63", "400.93", "402.24", "403.55", "404.86", "406.17", "407.48", "408.79", "410.10", "411.41", "412.72", "414.03", "415.34", "416.65", "417.96", "419.27", "420.58", "421.90", "423.21", "424.52", "425.83",
@@ -40,8 +38,10 @@ GENE_POOL = [
 # --- Parámetros de PSO ---
 N_PARTICLES = 300       # Número de partículas en el enjambre
 N_ITERATIONS = 250     # Número de iteraciones
-NUM_BANDS = 3          # Dimensiones del problema (bandas a seleccionar) 3
-MUTATION_RATE = 0.1
+NUM_BANDS = 5          # Dimensiones del problema (bandas a seleccionar) 3
+MUTATION_RATE = 0.2
+STAGNATED_MUTATION_RATE = 0.8
+STAGNATION_TRIGGER = 10
 
 # --- Coeficientes de PSO ---
 W_MAX = 0.9  # Inercia inicial (favorece exploración global)
@@ -169,10 +169,10 @@ def validate_on_test_set(best_bands: tuple, X_train: pd.DataFrame, y_train: pd.D
 
 def main():
     """Carga los datos y ejecuta el algoritmo PSO optimizado."""
-    file_means = '/usr/src/app/db/means.csv'
-    file_std = '/usr/src/app/db/std.csv'
-    # file_means = '/Users/israel/Projects/fig_ga_svm/db/means.csv'
-    # file_std = '/Users/israel/Projects/fig_ga_svm/db/std.csv'
+    # file_means = '/usr/src/app/db/means.csv'
+    # file_std = '/usr/src/app/db/std.csv'
+    file_means = '/Users/israel/Projects/fig_ga_svm/db/means.csv'
+    file_std = '/Users/israel/Projects/fig_ga_svm/db/std.csv'
     df_means = pd.read_csv(file_means)
     df_std = pd.read_csv(file_std)
     X1_train, X1_test, X2_train, X2_test, y_train, y_test = train_test_split(
@@ -182,6 +182,9 @@ def main():
         test_size=0.2,
         random_state=42,
         stratify=df_means['class'])
+    
+    stagnation_counter = 0
+    global MUTATION_RATE
 
     print("--- 🚀 Inicializando Enjambre de Partículas ---")
 
@@ -234,7 +237,12 @@ def main():
         particles_pos = np.clip(particles_pos, 0.0, 1.0)
 
         # mutation logic
-        mutation_mask = np.random.rand(N_PARTICLES, 1) < MUTATION_RATE
+        if stagnation_counter >= STAGNATION_TRIGGER:
+            mutation_mask = np.random.rand(N_PARTICLES, 1) < STAGNATED_MUTATION_RATE
+            stagnation_counter = 0
+        else:
+            mutation_mask = np.random.rand(N_PARTICLES, 1) < MUTATION_RATE
+
         new_random_positions = np.random.rand(N_PARTICLES, NUM_BANDS)
         particles_pos = np.where(mutation_mask,
                                  new_random_positions,
@@ -256,6 +264,11 @@ def main():
 
         # Actualizar gbest usando los pbests actualizados
         new_gbest_idx = int(np.argmax(pbest_fitness))
+
+        # Set update the stagnation counter + increase mutation rate
+        if pbest_fitness[new_gbest_idx] == gbest_fitness:
+            stagnation_counter += 1
+
         if pbest_fitness[new_gbest_idx] > gbest_fitness:
             gbest_fitness = pbest_fitness[new_gbest_idx]
             gbest = particles_pbest[new_gbest_idx]
