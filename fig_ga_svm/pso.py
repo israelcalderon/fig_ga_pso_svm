@@ -36,18 +36,16 @@ GENE_POOL = [
 
 
 # --- Parámetros de PSO ---
-N_PARTICLES = 300       # Número de partículas en el enjambre
-N_ITERATIONS = 250     # Número de iteraciones
+N_PARTICLES = 250      # Número de partículas en el enjambre
+N_ITERATIONS = 650     # Número de iteraciones
 NUM_BANDS = 5          # Dimensiones del problema (bandas a seleccionar) 3
 MUTATION_RATE = 0.2
-STAGNATED_MUTATION_RATE = 0.8
-STAGNATION_TRIGGER = 10
 
 # --- Coeficientes de PSO ---
 W_MAX = 0.9  # Inercia inicial (favorece exploración global)
 W_MIN = 0.4  # Inercia final (favorece exploración local)
-C1 = 2.0     # Coeficiente cognitivo (influencia de pbest)
-C2 = 2.0     # Coeficiente social (influencia de gbest)
+C1 = 1.9     # Coeficiente cognitivo (influencia de pbest)
+C2 = 2.1     # Coeficiente social (influencia de gbest)
 
 # -----------------------------------------------------------------------------
 # 2. FUNCIÓN DE FITNESS Y MAPEADO
@@ -235,13 +233,7 @@ def main():
         particles_vel = w * particles_vel + cognitive + social
         particles_pos = particles_pos + particles_vel
         particles_pos = np.clip(particles_pos, 0.0, 1.0)
-
-        # mutation logic
-        if stagnation_counter >= STAGNATION_TRIGGER:
-            mutation_mask = np.random.rand(N_PARTICLES, 1) < STAGNATED_MUTATION_RATE
-            stagnation_counter = 0
-        else:
-            mutation_mask = np.random.rand(N_PARTICLES, 1) < MUTATION_RATE
+        mutation_mask = np.random.rand(N_PARTICLES, 1) < MUTATION_RATE
 
         new_random_positions = np.random.rand(N_PARTICLES, NUM_BANDS)
         particles_pos = np.where(mutation_mask,
