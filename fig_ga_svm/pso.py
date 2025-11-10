@@ -42,8 +42,8 @@ NUM_BANDS = 5          # Dimensiones del problema (bandas a seleccionar) 3
 MUTATION_RATE = 0.2
 
 # --- Coeficientes de PSO ---
-W_MAX = 0.9  # Inercia inicial (favorece exploración global)
-W_MIN = 0.4  # Inercia final (favorece exploración local)
+W_MAX = 0.95  # Inercia inicial (favorece exploración global)
+W_MIN = 0.35  # Inercia final (favorece exploración local)
 C1 = 1.9     # Coeficiente cognitivo (influencia de pbest)
 C2 = 2.1     # Coeficiente social (influencia de gbest)
 
