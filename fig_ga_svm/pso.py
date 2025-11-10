@@ -44,8 +44,8 @@ MUTATION_RATE = 0.2
 # --- Coeficientes de PSO ---
 W_MAX = 0.95  # Inercia inicial (favorece exploración global)
 W_MIN = 0.35  # Inercia final (favorece exploración local)
-C1 = 1.9     # Coeficiente cognitivo (influencia de pbest)
-C2 = 2.1     # Coeficiente social (influencia de gbest)
+C1 = 2.0     # Coeficiente cognitivo (influencia de pbest)
+C2 = 2.0     # Coeficiente social (influencia de gbest)
 
 # -----------------------------------------------------------------------------
 # 2. FUNCIÓN DE FITNESS Y MAPEADO
