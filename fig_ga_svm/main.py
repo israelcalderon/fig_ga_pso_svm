@@ -29,15 +29,39 @@ if __name__ == '__main__':
     parser.add_argument("--num_iterations", help="Number of iterations/generations", type=int)
     parser.add_argument("--num_bands", help="Number of bands for individual", type=int)
     parser.add_argument("--mutation_rate", help="Mutation rate", type=float)
-    parser.add_argument("--w_max", help="Initial inertia (favors global exploration)", type=float)
-    parser.add_argument("--w_min", help="Final intertia (favors local exploration)", type=float)
-    parser.add_argument("--c1", help="Cognitive coeficient (influences pbest)", type=float)
-    parser.add_argument("--c2", help="Social coeficient (influence gbest)", type=float)
-    
+    parser.add_argument("--w_max",
+                        help="Initial inertia (favors global exploration)",
+                        type=float)
+    parser.add_argument("--w_min",
+                        help="Final intertia (favors local exploration)",
+                        type=float)
+    parser.add_argument("--w",
+                        help="Intertia when strategy is static",
+                        type=float)
+
+    parser.add_argument("--c1_min",
+                        help="Min cognitive coeficient (influences pbest)",
+                        type=float)
+    parser.add_argument("--c1_max",
+                        help="Max cognitive coeficient (influences pbest)",
+                        type=float)
+    parser.add_argument("--c1",
+                        help="Cognitive coeficient when static (influences pbest)",
+                        type=float)
+
+    parser.add_argument("--c2",
+                        help="Social coeficient when static (influence gbest)",
+                        type=float)
+    parser.add_argument("--c2_min",
+                        help="Min social coeficient (influence gbest)",
+                        type=float)
+    parser.add_argument("--c2_max",
+                        help="Max social coeficient (influence gbest)",
+                        type=float)
+
     parser.add_argument("--means_file",
                         help="means dataset location",
                         default="/usr/src/app/db/means.csv")
-    
     parser.add_argument("--std_file",
                         help="standar deviation dataset location",
                         default="/usr/src/app/db/std.csv")
