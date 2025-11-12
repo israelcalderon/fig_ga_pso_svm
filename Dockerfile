@@ -6,6 +6,6 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-WORKDIR /usr/src/app/fig_ga_svm/
+WORKDIR /usr/src/app/
 
 CMD [ "python", "-u", "./pso.py" ]
