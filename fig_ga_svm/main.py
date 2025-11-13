@@ -13,7 +13,8 @@ OPTIMIZERS  = {
 
 
 EVALUATORS = {
-    'svm': evaluator.SVMEvaluator
+    'svm': evaluator.SVMEvaluator,
+    'rf': evaluator.RFEvaluator
 }
 
 

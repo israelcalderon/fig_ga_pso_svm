@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
@@ -39,5 +40,28 @@ class SVMEvaluator(FitnessEvaluator):
         grid = GridSearchCV(pipeline, param_grid, cv=3, scoring='f1', n_jobs=1)
         _, _, y = self.data_manager.get_training_data()
         X = self.data_manager.get_preprocessed_features(individual)
+        grid.fit(X, y)
+        return grid.best_score_
+
+
+class RFEvaluator(FitnessEvaluator):
+
+    def evaluate(self, individual: tuple[str, ...]) -> float:
+        """
+        Evalúa al individuo usando Random Forest con GridSearchCV.
+        """
+        pipeline = make_pipeline(RandomForestClassifier(random_state=42, 
+                                                        class_weight='balanced',
+                                                        n_jobs=1))
+
+        param_grid = {
+            'randomforestclassifier__n_estimators': [100, 200],
+            'randomforestclassifier__max_depth': [10, None],
+            'randomforestclassifier__min_samples_leaf': [1, 4]
+        }
+        grid = GridSearchCV(pipeline, param_grid, cv=3, scoring='f1', n_jobs=1)
+        _, _, y = self.data_manager.get_training_data()
+        X = self.data_manager.get_preprocessed_features(individual)
+        
         grid.fit(X, y)
         return grid.best_score_
