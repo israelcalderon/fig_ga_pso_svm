@@ -1,13 +1,14 @@
 from fig_ga_svm import data
 from fig_ga_svm import evaluator
-from fig_ga_svm.optimizers import pso
+from fig_ga_svm.optimizers import pso, genetic_algorithm
 
 import argparse
 import pprint
 
 
 OPTIMIZERS  = {
-    'pso': pso.PSOOptimizer
+    'pso': pso.PSOOptimizer,
+    'ga': genetic_algorithm.GeneticAlgorithmOptimizer
 }
 
 
@@ -16,12 +17,12 @@ EVALUATORS = {
 }
 
 
-def format_arguments(args: argparse.Namespace) -> dict:
+def to_optimizer_arguments(args: argparse.Namespace) -> dict:
     not_arguments = ['heuristic', 'evaluator']
     return {k: v for k, v in vars(args).items() if k not in not_arguments}
 
 
-if __name__ == '__main__':
+def arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("heuristic", help="The meta heuristic to execute (ga, pso)")
     parser.add_argument("evaluator", help="The classifier to use (svm, rf, xgboost)")
@@ -65,8 +66,29 @@ if __name__ == '__main__':
     parser.add_argument("--std_file",
                         help="standar deviation dataset location",
                         default="/usr/src/app/db/std.csv")
+    # genetic
+    parser.add_argument("--population_size",
+                        help="Number of individuals per generation",
+                        type=int)
+    parser.add_argument("--elitism_count",
+                        help="Number of best to pass to the next generation",
+                        type=int)
+    parser.add_argument("--stagnation_mutation_rate",
+                        help="To deprecte: rate to use on stagnation",
+                        type=float)
+    parser.add_argument("--stagnation_threshold",
+                        help="To deprecte: Treshold to trigger stagnation flag",
+                        type=int)
+    parser.add_argument("--tournament_size",
+                        help="Size of tournament for tournament parent selection",
+                        type=int)
+    parser.add_argument("--selection_type",
+                        help="Selection type to use: tournament or roulette")
+    return parser.parse_args()
 
-    args = parser.parse_args()
+
+if __name__ == '__main__':
+    args = arguments()
     
     Optimizer = OPTIMIZERS.get(args.heuristic)
     Evaluator = EVALUATORS.get(args.evaluator)
@@ -79,7 +101,7 @@ if __name__ == '__main__':
 
     data_manager = data.DataManager(args.means_file, args.std_file)
     evaluator = Evaluator(data_manager)
-    optimizer_arguments = format_arguments(args)
+    optimizer_arguments = to_optimizer_arguments(args)
     best_individual, best_fitness, history = Optimizer().optimize(evaluator,
                                                                   optimizer_arguments)
     

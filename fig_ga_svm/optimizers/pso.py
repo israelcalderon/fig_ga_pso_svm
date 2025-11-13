@@ -1,30 +1,14 @@
-from typing import Dict, Literal, Optional, Union
+from typing import Optional
 from joblib import Parallel, delayed
 
 import numpy as np
 
 from fig_ga_svm.evaluator import FitnessEvaluator
-from fig_ga_svm.data import DataManager, GENE_POOL
+from fig_ga_svm.data import GENE_POOL
 from fig_ga_svm.optimizers.optimizer import Optimizer, Individual, Fitness, History
 
 
-type PSOParams = Dict[Literal['num_particles', 'num_iterations', 'num_bands',
-                              'mutation_rate', 'w_max', 'w_min', 'c1', 'c2'],
-                      Union[float, int]]
-
-
 class PSOOptimizer(Optimizer):
-
-    def __init__(self) -> None:
-        self.defaults = {
-            'num_particles': 150, 
-            'num_iterations': 200, 
-            'num_bands': 3,
-            'mutation_rate': 0.1, 
-            'w_max': 2.0,
-            'w_min': 2.0, 
-            'c1': 0.9,
-            'c2': 0.4}
 
     def __map_position_to_bands(self, position: np.ndarray) -> tuple:
         """
@@ -68,7 +52,7 @@ class PSOOptimizer(Optimizer):
         c2_max = kwargs.get('c2_max')
 
         if (c1 and (c1_min or c1_max) or (c2 and (c2_min or c2_max))):
-            raise Exception('Abifuous coeficient strategy')
+            raise Exception('Abiguous coeficient strategy')
         
         if c1 and c2:
             return c1, c2
@@ -82,15 +66,15 @@ class PSOOptimizer(Optimizer):
             evaluator: FitnessEvaluator,
             meta_heuristic_params: dict) -> tuple[Individual, Fitness, History]:
         
-        N_PARTICLES = meta_heuristic_params['num_particles']
-        NUM_BANDS = meta_heuristic_params['num_bands']
-        MUTATION_RATE = meta_heuristic_params['mutation_rate']
-        N_ITERATIONS = meta_heuristic_params['num_iterations']
+        num_particles = meta_heuristic_params['num_particles']
+        num_bands = meta_heuristic_params['num_bands']
+        mutation_rate = meta_heuristic_params['mutation_rate']
+        num_iterations = meta_heuristic_params['num_iterations']
         
-        # positions random vectors of size NUM_BANDS with values in [0, 1]
-        particles_pos = np.random.rand(N_PARTICLES, NUM_BANDS)
+        # positions random vectors of size num_bands with values in [0, 1]
+        particles_pos = np.random.rand(num_particles, num_bands)
         # velocity: vectors initialized at zero or small values
-        particles_vel = np.zeros((N_PARTICLES, NUM_BANDS))
+        particles_vel = np.zeros((num_particles, num_bands))
         # personal bests (pbest) init with current positions
         particles_pbest = np.copy(particles_pos)
 
@@ -110,18 +94,18 @@ class PSOOptimizer(Optimizer):
         print(f"Mejor Fitness Inicial: {gbest_fitness:.4f} con bandas {gbest_bands}")
         print("\n--- 🧠 Iniciando Optimización ---")
 
-        for i in range(N_ITERATIONS):
+        for i in range(num_iterations):
             w = self.__inertia(i,
-                             N_ITERATIONS,
+                             num_iterations,
                              meta_heuristic_params['w'],
                              meta_heuristic_params['w_min'],
                              meta_heuristic_params['w_max'])
             
-            C1, C2 = self.__coeficients(i, N_ITERATIONS, **meta_heuristic_params)
+            C1, C2 = self.__coeficients(i, num_iterations, **meta_heuristic_params)
             
             # Vectorized random coefficients per particle
-            r1 = np.random.rand(N_PARTICLES, NUM_BANDS)
-            r2 = np.random.rand(N_PARTICLES, NUM_BANDS)
+            r1 = np.random.rand(num_particles, num_bands)
+            r2 = np.random.rand(num_particles, num_bands)
 
             # Cognitive and social components (gbest broadcasts across particles)
             cognitive = C1 * r1 * (particles_pbest - particles_pos)
@@ -131,9 +115,9 @@ class PSOOptimizer(Optimizer):
             particles_vel = w * particles_vel + cognitive + social
             particles_pos = particles_pos + particles_vel
             particles_pos = np.clip(particles_pos, 0.0, 1.0)
-            mutation_mask = np.random.rand(N_PARTICLES, 1) < MUTATION_RATE
+            mutation_mask = np.random.rand(num_particles, 1) < mutation_rate
 
-            new_random_positions = np.random.rand(N_PARTICLES, NUM_BANDS)
+            new_random_positions = np.random.rand(num_particles, num_bands)
             particles_pos = np.where(mutation_mask,
                                     new_random_positions,
                                     particles_pos)
@@ -161,5 +145,5 @@ class PSOOptimizer(Optimizer):
                 gbest_bands = self.__map_position_to_bands(gbest)
 
             history.append((gbest_bands, gbest_fitness))
-            print(f"Iteración {i+1:03d}/{N_ITERATIONS} | Mejor Fitness Global: {gbest_fitness:.4f}")
+            print(f"Iteración {i+1:03d}/{num_iterations} | Mejor Fitness Global: {gbest_fitness:.4f}")
         return gbest_bands, gbest_fitness, history

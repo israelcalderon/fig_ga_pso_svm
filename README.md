@@ -1,4 +1,4 @@
-Execution example:   
+Execution PSO example:   
 ```sh
 python3 -m fig_ga_svm.main pso svm \
 --means_file=/Users/israel/Projects/fig_ga_svm/db/means.csv \
@@ -11,6 +11,22 @@ python3 -m fig_ga_svm.main pso svm \
 --w_min=0.5 \
 --c1=0.9 \
 --c2=0.4
+```
+
+Executions GA example:
+```sh
+python3 -m fig_ga_svm.main ga svm \
+--means_file=/Users/israel/Projects/fig_ga_svm/db/means.csv \
+--std_file=/Users/israel/Projects/fig_ga_svm/db/std.csv \
+--population_size=10 \
+--num_iterations=1 \
+--num_bands=3 \
+--mutation_rate=0.2 \
+--stagnation_mutation_rate=0.2 \
+--elitism_count=1 \
+--stagnation_threshold=50 \
+--tournament_size=5 \
+--selection_type=roulette
 ```
 
 Example 2:

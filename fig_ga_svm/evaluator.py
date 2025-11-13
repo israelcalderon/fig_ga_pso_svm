@@ -14,7 +14,7 @@ class FitnessEvaluator(ABC):
         self.data_manager = data_manager
 
     @abstractmethod
-    def evaluate(self, individual: tuple[str]) -> float:
+    def evaluate(self, individual: tuple[str, ...]) -> float:
         """
         Evaluates the the individual and returns the fitness function-
         punctuation (f1-score)
@@ -27,7 +27,7 @@ class FitnessEvaluator(ABC):
 
 class SVMEvaluator(FitnessEvaluator):
 
-    def evaluate(self, individual: tuple[str]) -> float:
+    def evaluate(self, individual: tuple[str, ...]) -> float:
         pipeline = make_pipeline(StandardScaler(), SVC(random_state=42, class_weight='balanced'))
         param_grid = {
             'svc__C': [0.1, 1, 10, 100],
