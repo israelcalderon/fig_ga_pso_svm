@@ -1,5 +1,6 @@
 import random
 from typing import List, Tuple
+from joblib import Parallel, delayed
 
 from fig_ga_svm.evaluator import FitnessEvaluator
 from fig_ga_svm.optimizers.optimizer import Optimizer, Individual, Fitness, History
@@ -110,8 +111,9 @@ class GeneticAlgorithmOptimizer(Optimizer):
         print("\n--- 🧬 Iniciando Optimización con Algoritmo Genetico ---")
 
         for generation in range(num_generations):
-            # Evaluate population
-            population_fitness = [(ind, float(evaluator.evaluate(ind))) for ind in population]
+            population_fitness = Parallel(n_jobs=-1)(
+                delayed(lambda individual: (individual, float(evaluator.evaluate(individual))))(individual) for individual in population
+            )
 
             # Sort descending by fitness
             population_fitness.sort(key=lambda x: x[1], reverse=True)
