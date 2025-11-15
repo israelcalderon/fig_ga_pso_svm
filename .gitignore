@@ -1,3 +1,4 @@
 __pycache__
 logs/logs.txt
 *.log
+.DS_Store

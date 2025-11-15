@@ -1,3 +1,7 @@
+import csv
+import json
+from datetime import datetime
+
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
@@ -71,3 +75,24 @@ class DataManager:
         x_std_subset = x_std_subset.reset_index(drop=True)
 
         return pd.concat([x_mean_subset, x_std_subset], axis=1)
+
+
+class ResultsManager:
+    
+    def __name(self, heuristic: str, evaluator: str) -> str:
+        now = datetime.now()
+        return f"{heuristic}_{evaluator}_{now.strftime('%Y-%m%dT%H:%M:%S')}"
+
+    def store_results(self, dir_path: str, heuristic: str, evaluator: str,
+                      best_individual: tuple, fitness: float, precise_fitness: str,
+                      history: list, exec_params: dict) -> None:
+        name = self.__name(heuristic, evaluator)
+        file_path = f"{dir_path}/{name}.csv"
+        
+        with open(file_path, mode='a', newline='') as file:
+            writer = csv.writer(file, delimiter='|')
+            writer.writerow([json.dumps(best_individual),
+                             fitness,
+                             precise_fitness,
+                             json.dumps([x[1] for x in history]),
+                             json.dumps(exec_params)])

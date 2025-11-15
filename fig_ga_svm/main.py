@@ -27,6 +27,13 @@ def arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("heuristic", help="The meta heuristic to execute (ga, pso)")
     parser.add_argument("evaluator", help="The classifier to use (svm, rf, xgboost)")
+    parser.add_argument("--batch_size",
+                        help="How many times run the complete process",
+                        default=1,
+                        type=int)
+    parser.add_argument("--results_path",
+                        help="Directory to store results",
+                        default="/logs")
     parser.add_argument("--num_particles", help="Number of particles", type=int)
     parser.add_argument("--num_iterations", help="Number of iterations/generations", type=int)
     parser.add_argument("--num_bands", help="Number of bands for individual", type=int)
@@ -91,6 +98,7 @@ def arguments() -> argparse.Namespace:
 if __name__ == '__main__':
     args = arguments()
     
+    results_manager = data.ResultsManager()
     Optimizer = OPTIMIZERS.get(args.heuristic)
     Evaluator = EVALUATORS.get(args.evaluator)
     
@@ -103,15 +111,27 @@ if __name__ == '__main__':
     data_manager = data.DataManager(args.means_file, args.std_file)
     evaluator = Evaluator(data_manager)
     optimizer_arguments = to_optimizer_arguments(args)
-    best_individual, best_fitness, history = Optimizer().optimize(evaluator,
-                                                                  optimizer_arguments)
-    
-    print("\n--- 🎉 Algoritmo Finalizado 🎉 ---")
-    print(f"🏆 Mejor combinación de bandas encontrada: {best_individual}")
-    print(f"⭐ Valor de fitness (F1 Score): {best_fitness:.4f}")
+    for i in range(args.batch_size):
+        print(f"\n ⏱️ batch {i+1} of {args.batch_size}")
+        best_individual, best_fitness, history = Optimizer().optimize(evaluator,
+                                                                    optimizer_arguments)
+        precise_fitness = evaluator.evaluate_precise(best_individual)
+        
+        print("\n--- 🎉 Algoritmo Finalizado 🎉 ---")
+        print(f"🏆 Mejor combinación de bandas encontrada: {best_individual}")
+        print(f"⭐ Valor de fitness (F1 Score): {best_fitness:.4f}")
 
-    print("\n📈 Historial del mejor fitness por iteración:")
-    pprint.pprint(history)
+        print("\n📈 Historial del mejor fitness por iteración:")
+        pprint.pprint(history)
 
-    print("\n📋 Argumentos usados para ejecutar la búsqueda:")
-    pprint.pprint(optimizer_arguments)
+        print("\n📋 Argumentos usados para ejecutar la búsqueda:")
+        pprint.pprint(optimizer_arguments)
+
+        results_manager.store_results(args.results_path,
+                                    args.heuristic,
+                                    args.evaluator,
+                                    best_individual,
+                                    best_fitness,
+                                    precise_fitness,
+                                    history,
+                                    optimizer_arguments)
