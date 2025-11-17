@@ -103,24 +103,21 @@ class SVMEvaluator(FitnessEvaluator):
 class RFEvaluator(FitnessEvaluator):
 
     def evaluate(self, individual: tuple[str, ...]) -> float:
-        """
-        Evalúa al individuo usando Random Forest con GridSearchCV.
-        """
-        pipeline = make_pipeline(RandomForestClassifier(random_state=42, 
-                                                        class_weight='balanced',
-                                                        n_jobs=1))
-
-        param_grid = {
-            'randomforestclassifier__n_estimators': [100, 200],
-            'randomforestclassifier__max_depth': [10, None],
-            'randomforestclassifier__min_samples_leaf': [1, 4]
-        }
-        grid = GridSearchCV(pipeline, param_grid, cv=3, scoring='f1', n_jobs=1)
+        pipeline = make_pipeline(RandomForestClassifier(
+            n_estimators=100,
+            max_depth=None,
+            min_samples_leaf=2,
+            random_state=42,
+            class_weight='balanced',
+            n_jobs=1
+        ))
         _, _, y = self.data_manager.get_training_data()
         X = self.data_manager.get_preprocessed_features(individual)
-        
-        grid.fit(X, y)
-        return grid.best_score_
+        try:
+            scores = cross_val_score(pipeline, X, y.values.ravel(), cv=3, scoring='f1', n_jobs=1)
+            return scores.mean()
+        except Exception:
+            return 0.0
 
     def evaluate_precise(self, individual: tuple[str, ...]) -> float:
         """
