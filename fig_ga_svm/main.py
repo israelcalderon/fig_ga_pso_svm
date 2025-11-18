@@ -98,7 +98,7 @@ def arguments() -> argparse.Namespace:
 if __name__ == '__main__':
     args = arguments()
     
-    results_manager = data.ResultsManager()
+    results_manager = data.ResultsManager(args.heuristic, args.evaluator)
     Optimizer = OPTIMIZERS.get(args.heuristic)
     Evaluator = EVALUATORS.get(args.evaluator)
     
@@ -128,10 +128,8 @@ if __name__ == '__main__':
         pprint.pprint(optimizer_arguments)
 
         results_manager.store_results(args.results_path,
-                                    args.heuristic,
-                                    args.evaluator,
-                                    best_individual,
-                                    best_fitness,
-                                    precise_fitness,
-                                    history,
-                                    optimizer_arguments)
+                                      best_individual,
+                                      best_fitness,
+                                      precise_fitness,
+                                      history,
+                                      optimizer_arguments)

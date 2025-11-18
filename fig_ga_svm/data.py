@@ -78,16 +78,17 @@ class DataManager:
 
 
 class ResultsManager:
+
+    def __init__(self, heuristic: str, evaluator: str) -> None:
+        self.name = self.__name(heuristic, evaluator)
     
     def __name(self, heuristic: str, evaluator: str) -> str:
         now = datetime.now()
-        return f"{heuristic}_{evaluator}_{now.strftime('%Y-%m%dT%H:%M:%S')}"
+        return f"{heuristic}_{evaluator}_{now.strftime('%Y_%m_%dTH_%M_%S')}"
 
-    def store_results(self, dir_path: str, heuristic: str, evaluator: str,
-                      best_individual: tuple, fitness: float, precise_fitness: str,
-                      history: list, exec_params: dict) -> None:
-        name = self.__name(heuristic, evaluator)
-        file_path = f"{dir_path}/{name}.csv"
+    def store_results(self, dir_path: str, best_individual: tuple, fitness: float,
+                      precise_fitness: str, history: list, exec_params: dict) -> None:
+        file_path = f"{dir_path}/{self.name}.csv"
         
         with open(file_path, mode='a', newline='') as file:
             writer = csv.writer(file, delimiter='|')
