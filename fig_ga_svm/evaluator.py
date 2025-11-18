@@ -4,7 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
-from sklearn.model_selection import GridSearchCV, cross_val_score
+from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.metrics import classification_report, f1_score, confusion_matrix
 
 from fig_ga_svm.data import DataManager
@@ -104,18 +104,23 @@ class RFEvaluator(FitnessEvaluator):
 
     def evaluate(self, individual: tuple[str, ...]) -> float:
         pipeline = make_pipeline(RandomForestClassifier(
-            n_estimators=100,
-            max_depth=None,
-            min_samples_leaf=2,
+            n_estimators=15,
+            max_depth=10,
+            min_samples_leaf=5,
+            max_samples=0.6,
             random_state=42,
             class_weight='balanced',
             n_jobs=1
         ))
-        _, _, y = self.data_manager.get_training_data()
-        X = self.data_manager.get_preprocessed_features(individual)
+        _, _, y_full = self.data_manager.get_training_data()
+        X_full = self.data_manager.get_preprocessed_features(individual)
         try:
-            scores = cross_val_score(pipeline, X, y.values.ravel(), cv=3, scoring='f1', n_jobs=1)
-            return scores.mean()
+            X_train, X_val, y_train, y_val = train_test_split(
+                X_full, y_full, test_size=0.3, random_state=42, stratify=y_full
+            )
+            pipeline.fit(X_train, y_train)
+            y_pred = pipeline.predict(X_val)
+            return f1_score(y_val, y_pred, average='binary')
         except Exception:
             return 0.0
 
