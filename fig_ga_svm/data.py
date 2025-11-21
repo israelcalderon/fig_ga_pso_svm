@@ -84,7 +84,7 @@ class ResultsManager:
     
     def __name(self, heuristic: str, evaluator: str) -> str:
         now = datetime.now()
-        return f"{heuristic}_{evaluator}_{now.strftime('%Y_%m_%dTH_%M_%S')}"
+        return f"{heuristic}_{evaluator}_{now.strftime('%Y_%m_%dT%H_%M_%S')}"
 
     def store_results(self, dir_path: str, best_individual: tuple, fitness: float,
                       precise_fitness: str, history: list, exec_params: dict) -> None:
@@ -92,7 +92,7 @@ class ResultsManager:
         
         with open(file_path, mode='a', newline='') as file:
             writer = csv.writer(file, delimiter='|')
-            writer.writerow([json.dumps(best_individual),
+            writer.writerow([','.join(best_individual),
                              fitness,
                              precise_fitness,
                              json.dumps([x[1] for x in history]),
