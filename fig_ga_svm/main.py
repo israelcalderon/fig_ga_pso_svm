@@ -93,7 +93,7 @@ def arguments() -> argparse.Namespace:
     parser.add_argument("--selection_type",
                         help="Selection type to use: tournament or roulette")
     parser.add_argument("--crossover_type",
-                        help="GA Crossover type: blx or singe_point")
+                        help="GA Crossover type: blx or single_point")
     parser.add_argument("--blend_alpha",
                         help="GA Blx crossover alpha",
                         type=float)
