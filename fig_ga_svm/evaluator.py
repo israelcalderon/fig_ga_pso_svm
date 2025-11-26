@@ -43,7 +43,7 @@ class SVMEvaluator(FitnessEvaluator):
         # IMPORTANT: when we parallelize over particles, keep GridSearchCV single-threaded
         # to avoid nested parallelism. Set n_jobs=1 here.
         # grid = GridSearchCV(pipeline, param_grid, cv=3, scoring='f1', n_jobs=1)
-        _, _, y = self.data_manager.get_training_data()
+        _, y = self.data_manager.get_training_data()
         X = self.data_manager.get_preprocessed_features(individual)
         #return grid.best_score_
         try:
@@ -75,10 +75,10 @@ class SVMEvaluator(FitnessEvaluator):
                             verbose=1)     # <-- Muestra el progreso
 
         print("Cargando datos de entrenamiento y prueba...")
-        _, _, y_train = self.data_manager.get_training_data()
+        _, y_train = self.data_manager.get_training_data()
         X_train = self.data_manager.get_preprocessed_features(individual, use_test_set=False)
         
-        _, _, y_test = self.data_manager.get_testing_data()
+        _, y_test = self.data_manager.get_testing_data()
         X_test = self.data_manager.get_preprocessed_features(individual, use_test_set=True)
         
         print(f"Ajustando GridSearchCV en {X_train.shape[0]} muestras de entrenamiento...")
@@ -112,7 +112,7 @@ class RFEvaluator(FitnessEvaluator):
             class_weight='balanced',
             n_jobs=1
         ))
-        _, _, y = self.data_manager.get_training_data()
+        _, y = self.data_manager.get_training_data()
         X = self.data_manager.get_preprocessed_features(individual)
         try:
             scores = cross_val_score(pipeline, X, y.values.ravel(), cv=3, scoring='f1', n_jobs=1)
@@ -152,10 +152,10 @@ class RFEvaluator(FitnessEvaluator):
 
         # 4. Obtener datos de ENTRENAMIENTO y PRUEBA
         print("Cargando datos de entrenamiento y prueba...")
-        _, _, y_train = self.data_manager.get_training_data()
+        _, y_train = self.data_manager.get_training_data()
         X_train = self.data_manager.get_preprocessed_features(individual, use_test_set=False)
         
-        _, _, y_test = self.data_manager.get_testing_data()
+        _, y_test = self.data_manager.get_testing_data()
         X_test = self.data_manager.get_preprocessed_features(individual, use_test_set=True)
         
         # 5. Ajustar en el conjunto de ENTRENAMIENTO

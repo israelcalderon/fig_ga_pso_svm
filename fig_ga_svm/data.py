@@ -56,30 +56,40 @@ class DataManager:
     
     def __init__(self, 
                  means_path: str,
-                 std_path: str,
+                 std_path: str | None,
                  test_size: float = 0.2,
                  random_state: int = 42):
         df_means = pd.read_csv(means_path)
-        df_std = pd.read_csv(std_path)
-        
         y = df_means['class']
         X_means = df_means.drop('class', axis=1)
-        X_std = df_std.drop('class', axis=1)
 
-        self.X_means_train, self.X_means_test, \
-        self.X_std_train, self.X_std_test, \
-        self.y_train, self.y_test = train_test_split(
-            X_means, X_std, y, 
-            test_size=test_size, 
-            random_state=random_state, 
-            stratify=y
-        )
+        if std_path:
+            df_std = pd.read_csv(std_path)
+            X_std = df_std.drop('class', axis=1)
+            self.X_means_train, self.X_means_test, \
+            self.X_std_train, self.X_std_test, \
+            self.y_train, self.y_test = train_test_split(
+                X_means, X_std, y,
+                test_size=test_size,
+                random_state=random_state,
+                stratify=y
+            )
+        else:
+            self.X_std_train, self.X_std_test = None, None
+
+            self.X_means_train, self.X_means_test, \
+            self.y_train, self.y_test = train_test_split(
+                X_means, y,
+                test_size=test_size,
+                random_state=random_state,
+                stratify=y
+            )
 
     def get_training_data(self) -> tuple:
-        return self.X_means_train, self.X_std_train, self.y_train
+        return (self.X_means_train, self.X_std_train), self.y_train
 
     def get_testing_data(self) -> tuple:
-        return self.X_means_test, self.X_std_test, self.y_test
+        return (self.X_means_test, self.X_std_test), self.y_test
 
     def get_preprocessed_features(self, bands: tuple,
                                   use_test_set: bool = False) -> pd.DataFrame:
@@ -89,15 +99,16 @@ class DataManager:
         columns = list(bands)
 
         X_means = self.X_means_train if not use_test_set else self.X_means_test
-        X_std = self.X_std_train if not use_test_set else self.X_std_test
-
         x_mean_subset = X_means[columns].add_suffix('_mean')
-        x_std_subset = X_std[columns].add_suffix('_std')
-
         x_mean_subset = x_mean_subset.reset_index(drop=True)
-        x_std_subset = x_std_subset.reset_index(drop=True)
 
-        return pd.concat([x_mean_subset, x_std_subset], axis=1)
+        if self.X_std_train and self.X_std_test:
+            X_std = self.X_std_train if not use_test_set else self.X_std_test
+            x_std_subset = X_std[columns].add_suffix('_std')
+            x_std_subset = x_std_subset.reset_index(drop=True)
+            return pd.concat([x_mean_subset, x_std_subset], axis=1)
+
+        return pd.concat([x_mean_subset], axis=1)
 
 
 class ResultsManager:
