@@ -129,5 +129,5 @@ class ResultsManager:
             writer.writerow([','.join(best_individual),
                              fitness,
                              precise_fitness,
-                             json.dumps([x[1] for x in history]),
+                             json.dumps(history),
                              json.dumps(exec_params)])
