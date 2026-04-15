@@ -73,7 +73,8 @@ def arguments() -> argparse.Namespace:
                         default="/usr/src/app/db/means.csv")
     # default="/usr/src/app/db/std.csv"
     parser.add_argument("--std_file",
-                        help="standar deviation dataset location")
+                        help="standar deviation dataset location",
+                        default="/usr/src/app/db/std.csv")
     # genetic
     parser.add_argument("--population_size",
                         help="Number of individuals per generation",
