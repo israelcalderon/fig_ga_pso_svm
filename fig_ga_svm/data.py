@@ -102,7 +102,7 @@ class DataManager:
         x_mean_subset = X_means[columns].add_suffix('_mean')
         x_mean_subset = x_mean_subset.reset_index(drop=True)
 
-        if self.X_std_train and self.X_std_test:
+        if self.X_std_train is not None and self.X_std_test is not None:
             X_std = self.X_std_train if not use_test_set else self.X_std_test
             x_std_subset = X_std[columns].add_suffix('_std')
             x_std_subset = x_std_subset.reset_index(drop=True)

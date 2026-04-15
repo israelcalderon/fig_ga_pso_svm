@@ -112,7 +112,7 @@ if __name__ == '__main__':
         raise Exception(f'optimizer {args.heuristic} not implemented')
     
     if not Evaluator:
-        raise Exception(f'evaluator {args.evaluators} not implemented')
+        raise Exception(f'evaluator {args.evaluator} not implemented')
 
     data_manager = data.DataManager(args.means_file, args.std_file)
     evaluator = Evaluator(data_manager)
