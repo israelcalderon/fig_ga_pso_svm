@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+from sklearn.base import BaseEstimator
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
@@ -72,7 +73,7 @@ class SVMEvaluator(FitnessEvaluator):
                             n_jobs=-1,
                             verbose=1)
     
-    def evaluate_precise(self, individual: tuple[str, ...], probability: bool = False) -> tuple[float, Any]:
+    def evaluate_precise(self, individual: tuple[str, ...], probability: bool = False) -> tuple[float, BaseEstimator]:
         print("\n--- Iniciando Evaluación Precisa (SVM) ---")
         grid = self.__grid_search_cv(probability)
 
@@ -122,7 +123,7 @@ class RFEvaluator(FitnessEvaluator):
         except Exception:
             return 0.0
 
-    def evaluate_precise(self, individual: tuple[str, ...]) -> tuple[float, Any]:
+    def evaluate_precise(self, individual: tuple[str, ...]) -> tuple[float, BaseEstimator]:
         """
         Entrena un modelo RF con una búsqueda de hiperparámetros
         EXHAUSTIVA (lenta) y lo evalúa en el CONJUNTO DE PRUEBA
