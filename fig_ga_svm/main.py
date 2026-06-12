@@ -121,7 +121,7 @@ if __name__ == '__main__':
         print(f"\n ⏱️ batch {i+1} of {args.batch_size}")
         best_individual, best_fitness, history = Optimizer().optimize(evaluator,
                                                                     optimizer_arguments)
-        precise_fitness = evaluator.evaluate_precise(best_individual)
+        precise_fitness, _ = evaluator.evaluate_precise(best_individual)
         
         print("\n--- 🎉 Algoritmo Finalizado 🎉 ---")
         print(f"🏆 Mejor combinación de bandas encontrada: {best_individual}")

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
@@ -54,25 +55,26 @@ class SVMEvaluator(FitnessEvaluator):
             # Esto puede pasar si un fold de CV no tiene ambas clases por casualidad
             return 0.0
     
-    def evaluate_precise(self, individual: tuple[str, ...]) -> float:
-        print("\n--- Iniciando Evaluación Precisa (SVM) ---")
-        
+    def __grid_search_cv(self, probability: bool = False) -> GridSearchCV:
         pipeline = make_pipeline(
             StandardScaler(), 
-            SVC(random_state=42, class_weight='balanced')
+            SVC(random_state=42, class_weight='balanced', probability=probability)
         )
-
         param_grid = {
             'svc__C': [0.1, 1, 10, 100, 500, 1000],
             'svc__gamma': ['scale', 0.001, 0.01, 0.1, 1, 'auto'],
             'svc__kernel': ['rbf', 'linear']
         }
-        grid = GridSearchCV(pipeline, 
-                            param_grid, 
-                            cv=5,            # <-- Más robusto
-                            scoring='f1', 
-                            n_jobs=-1,     # <-- Usa todos los cores
-                            verbose=1)     # <-- Muestra el progreso
+        return GridSearchCV(pipeline,
+                            param_grid,
+                            cv=5,
+                            scoring='f1',
+                            n_jobs=-1,
+                            verbose=1)
+    
+    def evaluate_precise(self, individual: tuple[str, ...], probability: bool = False) -> tuple[float, Any]:
+        print("\n--- Iniciando Evaluación Precisa (SVM) ---")
+        grid = self.__grid_search_cv(probability)
 
         print("Cargando datos de entrenamiento y prueba...")
         _, y_train = self.data_manager.get_training_data()
@@ -97,7 +99,7 @@ class SVMEvaluator(FitnessEvaluator):
         print(f"\nReporte de Clasificación en el CONJUNTO DE PRUEBA:")
         print(classification_report(y_test, y_pred))
         
-        return final_f1_score
+        return final_f1_score, best_model
 
 
 class RFEvaluator(FitnessEvaluator):
@@ -120,7 +122,7 @@ class RFEvaluator(FitnessEvaluator):
         except Exception:
             return 0.0
 
-    def evaluate_precise(self, individual: tuple[str, ...]) -> float:
+    def evaluate_precise(self, individual: tuple[str, ...]) -> tuple[float, Any]:
         """
         Entrena un modelo RF con una búsqueda de hiperparámetros
         EXHAUSTIVA (lenta) y lo evalúa en el CONJUNTO DE PRUEBA
@@ -177,4 +179,4 @@ class RFEvaluator(FitnessEvaluator):
         print(f"\nReporte de Clasificación en el CONJUNTO DE PRUEBA:")
         print(classification_report(y_test, y_pred))
         print(confusion_matrix(y_test, y_pred))        
-        return final_f1_score
+        return final_f1_score, best_model
