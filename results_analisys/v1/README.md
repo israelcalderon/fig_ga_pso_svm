@@ -36,6 +36,19 @@ The classifier used with the best individual of the meta-heuristic  was a Suppor
 The following individuals were found running the mentioned algorithm with the parameters documented at the csv log respective file, in the table is reported the description of the individual, the bands found for the individual and the F1-Score obtained from the evaluate_precise function during the optimization process.
 
 ### Genetic Algorithm
+### Mean TODO
+The corresponding log files are:
+- results_analisys/v1/ga_svm_3b_2025_11_16.csv
+- results_analisys/v1/ga_svm_5b_2025_11_16.csv
+- results_analisys/v1/ga_svm_6b_2025_11_15.csv
+
+|Description|Bands                                         |F1-Score          |
+|-----------|----------------------------------------------|------------------|
+|3 Bands    |                        |0.|
+|5 Bands    |        |0.|
+|6 Bands    ||0.|
+
+#### Mean + Standard deviation
 The corresponding log files are:
 - results_analisys/v1/ga_svm_3b_2025_11_16.csv
 - results_analisys/v1/ga_svm_5b_2025_11_16.csv
@@ -62,3 +75,22 @@ The corresponding log files are:
 ## Analisys
 The results of this excecution will be analyzed with a SHAP Beeswarm graph and a mean importance Bar Plot. For each of the individuals a dataset will be created containing only the selected bands by each individual. 
 
+## PCA Analysis
+A PCA Analysis was runned with 5 PCA to match the best results from the 5 bands found by the meta heuristics and the results are th following:
+```
+Overall 5-Fold Cross-Validation F1-Score: 0.6484
+
+Top 5 features influencing PC1:
+  1. 450.82_mean (Absolute Loading: 0.04504)
+  2. 452.13_mean (Absolute Loading: 0.04501)
+  3. 449.50_mean (Absolute Loading: 0.04500)
+  4. 445.55_mean (Absolute Loading: 0.04499)
+  5. 446.87_mean (Absolute Loading: 0.04498)
+
+Top 5 features influencing PC2:
+  1. 805.16_mean (Absolute Loading: 0.04961)
+  2. 806.54_mean (Absolute Loading: 0.04961)
+  3. 814.81_mean (Absolute Loading: 0.04961)
+  4. 803.78_mean (Absolute Loading: 0.04961)
+  5. 802.41_mean (Absolute Loading: 0.04960)
+```
